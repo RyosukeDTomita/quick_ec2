@@ -33,6 +33,7 @@ resource "aws_iam_role_policy_attachment" "ssm_policy" {
 
 
 # ec2
+# NOTE: user_dataで変数展開されないようにEOF2を''で囲っており，Terraformが$を解釈しないように$$にしてescapeしている。
 resource "aws_instance" "example" {
   ami           = "ami-00c79d83cf718a893"
   instance_type = "t3.micro"
@@ -46,18 +47,19 @@ resource "aws_instance" "example" {
   user_data = <<EOF
 #!/bin/bash
 yum install -y docker
-cat <<EOF2 > /etc/systemd/system/docker.httpd.service
+cat <<'EOF2' > /etc/systemd/system/docker.httpd.service
 [Unit]
 Description=httpd Container
 After=docker.service
 Requires=docker.service
 [Service]
+Environment="CONTAINER_NAME=httpd-container"
 TimeoutStartSec=0
 Restart=always
-ExecStartPre=-/usr/bin/docker stop httpd-container
-ExecStartPre=-/usr/bin/docker rm httpd-container
+ExecStartPre=-/usr/bin/docker stop $${CONTAINER_NAME}
+ExecStartPre=-/usr/bin/docker rm $${CONTAINER_NAME}
 ExecStartPre=/usr/bin/docker pull httpd
-ExecStart=/usr/bin/docker run --rm --name httpd-container -p 80:80 httpd
+ExecStart=/usr/bin/docker run --rm --name $${CONTAINER_NAME} -p 80:80 httpd
 [Install]
 WantedBy=multi-user.target
 EOF2
