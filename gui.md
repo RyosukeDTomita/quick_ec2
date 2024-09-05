@@ -20,15 +20,13 @@
 
 ### UserData
 
-
-
-<details><summary>これが理想だが$マークの箇所が消えたりするので変数を全部べたがきするかしかなさそう。
-</summary>
+> [!NOTE]
+> `EOF`を''で囲むことで変数展開を無効にしている。
 
 ```
 #!/bin/bash
 yum install -y docker
-cat <<EOF2 > /etc/systemd/system/docker.httpd.service
+cat <<'EOF' > /etc/systemd/system/docker.httpd.service
 [Unit]
 Description=httpd Container
 After=docker.service
@@ -43,33 +41,7 @@ ExecStartPre=/usr/bin/docker pull httpd
 ExecStart=/usr/bin/docker run --rm --name ${CONTAINER_NAME} -p 80:80 httpd
 [Install]
 WantedBy=multi-user.target
-EOF2
-systemctl enable --now docker.httpd
-systemctl restart docker.httpd
-systemctl daemon-reload
-```
-</details>
-
-妥協版
-
-```
-#!/bin/bash
-yum install -y docker
-cat <<EOF2 > /etc/systemd/system/docker.httpd.service
-[Unit]
-Description=httpd Container
-After=docker.service
-Requires=docker.service
-[Service]
-TimeoutStartSec=0
-Restart=always
-ExecStartPre=-/usr/bin/docker stop httpd-container
-ExecStartPre=-/usr/bin/docker rm httpd-container
-ExecStartPre=/usr/bin/docker pull httpd
-ExecStart=/usr/bin/docker run --rm --name httpd-container -p 80:80 httpd
-[Install]
-WantedBy=multi-user.target
-EOF2
+EOF
 systemctl enable --now docker.httpd
 systemctl restart docker.httpd
 systemctl daemon-reload
